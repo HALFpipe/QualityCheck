@@ -7,6 +7,7 @@ import { CleanWebpackPlugin } from "clean-webpack-plugin";
 import InlinePlugin from "./inline-plugin.mjs";
 import iconsPlugin from "./icons-plugin.mjs";
 
+import autoprefixer from "autoprefixer";
 import postcssNormalize from "postcss-normalize";
 import postcssReporter from "postcss-reporter";
 
@@ -35,25 +36,26 @@ const base = {
         test: /\.scss$/,
         exclude: /node_modules/,
         use: [
-          "raw-loader", 
+          "raw-loader",
           {
-            loader: "postcss-loader", 
+            loader: "postcss-loader",
             options: {
               sourceMap: true,
               postcssOptions: {
                 plugins: [
+                  autoprefixer(),
                   iconsPlugin(),
                   postcssNormalize(),
                   postcssReporter(),
-                ],    
+                ],
               },
             },
           },
-          { 
-            loader: "sass-loader", 
-            options: { 
-              sourceMap: true,  
-            },  
+          {
+            loader: "sass-loader",
+            options: {
+              sourceMap: true,
+            },
           },
         ],
       },
