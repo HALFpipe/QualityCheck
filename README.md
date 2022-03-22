@@ -1,7 +1,6 @@
-Welcome to the mindandbrain/qualitycheck
+Welcome to the HALFpipe/QualityCheck
 ========================================
 
-[![https://github.com/mindandbrain/qualitycheck/workflows/continuous%20integration/badge.svg](https://github.com/mindandbrain/qualitycheck/workflows/continuous%20integration/badge.svg)](https://github.com/mindandbrain/qualitycheck/actions?query=workflow%3A%22continuous+integration%22) [![codecov](https://codecov.io/gh/mindandbrain/qualitycheck/branch/master/graph/badge.svg)](https://codecov.io/gh/mindandbrain/qualitycheck)
+[![https://github.com/HALFpipe/QualityCheck/workflows/continuous%20integration/badge.svg](https://github.com/HALFpipe/QualityCheck/workflows/continuous%20integration/badge.svg)](https://github.com/HALFpipe/QualityCheck/actions?query=workflow%3A%22continuous+integration%22) [![codecov](https://codecov.io/gh/HALFpipe/QualityCheck/branch/master/graph/badge.svg)](https://codecov.io/gh/HALFpipe/QualityCheck)
 
-This repository is part of `Halfpipe`. Please see the main project documentation
-at <https://github.com/mindandbrain/halfpipe>.
+Please see the main project documentation at <https://github.com/HALFpipe/HALFpipe>.
