@@ -1,6 +1,5 @@
 import { ViewModel } from "../../view-model";
 import {
-  Entity,
   Location,
   statusDisplayNames,
   statusColors,
@@ -13,7 +12,7 @@ import {
   ImgTypeStr,
   imgTypeStrs,
   imgTypeStrDisplayNames,
-  entities,
+  valTypeFormat,
 } from "../../model";
 
 import { Attribute, h, t } from "../render";
@@ -181,6 +180,7 @@ export class Charts extends HTMLElement {
         viewModel.valViewModel.vals[valType],
         5,
         valTypeUnits[valType],
+        valTypeFormat[valType],
         10
       );
     }

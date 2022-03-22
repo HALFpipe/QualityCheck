@@ -21,6 +21,13 @@ export const valTypeUnits: { [key in ValType]: string } = {
   mean_gm_tsnr: "AU",
 } as const;
 
+export const valTypeFormat: { [key in ValType]: string } = {
+  fd_mean: "f",
+  fd_perc: "f",
+  aroma_noise_frac: "%",
+  mean_gm_tsnr: "f",
+} as const;
+
 export const valTypeImgTypes: { [key in ValType]: ImgType } = {
   fd_mean: 3,
   fd_perc: 3,

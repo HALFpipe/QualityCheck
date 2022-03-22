@@ -29,7 +29,6 @@ describe("NodeError", () => {
       node: nodename,
     }).then((nodeError) => {
 
-      console.log(nodeError);
       for (let entity of entities) {
         if (entity in expected) {
           expect(nodeError[entity]).toEqual(expected[entity]);

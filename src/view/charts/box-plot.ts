@@ -1,6 +1,6 @@
 import { format, precisionFixed } from "d3-format";
 
-import { Val, entities, keyPath, Rating, ratings, ratingColors } from "../../model";
+import { Val, keyPath, Rating, ratings, ratingColors } from "../../model";
 import { ViewModel } from "../../view-model";
 
 import { Attribute, h, t } from "../render";
@@ -39,7 +39,8 @@ export class BoxPlot extends HTMLElement {
     viewModel: ViewModel,
     vals: Array<Val>, // assumed to be sorted by val.number
     radius: number,
-    unit: string,
+    valUnit: string,
+    valFormat: string,
     nAxisTicks: number
   ) {
     super();
@@ -120,14 +121,13 @@ export class BoxPlot extends HTMLElement {
     const spacing = (this.max - this.min) / nAxisTicks;
     const precision = precisionFixed(spacing);
 
-    const formatFixed = format(`.${precision}f`);
-    const formatPercent = format(`.${precision}%`);
+    const formatVal = format(`.${precision}${valFormat}`);
 
     for (let i = 0; i < nAxisTicks + 1; i++) {
       const x = this.min + spacing * i;
-      let xstr = unit === "%" ? formatPercent(x).replace("%", "") : formatFixed(x);
+      let xstr = formatVal(x).replace("%", "");
       if (i === nAxisTicks) {
-        xstr = `${xstr} ${unit}`;
+        xstr = `${xstr} ${valUnit}`;
       }
       axisTicks.push(
         h(
