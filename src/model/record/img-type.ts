@@ -69,6 +69,8 @@ export const imgTypeSuffixes: { [key in ImgType]: Suffix } = {
 } as const;
 
 export const relatedImgsImgTypes: { [key in string]: ImgType } = {
+  t1w_dseg_mask: 1,
+  std_t1w: 1,
   compcor: 3,
   conf_corr: 3,
   reg: 5,
