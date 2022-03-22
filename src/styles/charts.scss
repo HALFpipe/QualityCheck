@@ -352,7 +352,7 @@ qc-charts {
 
             &::after {
               content: "";
-              width: calc(100%-1px);
+              width: calc(100% - 1px);
               position: absolute;
               left: 0;
               top: 0;
