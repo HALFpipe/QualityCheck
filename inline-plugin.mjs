@@ -1,6 +1,6 @@
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+import HtmlWebpackPlugin from "html-webpack-plugin";
 
-class InlinePlugin {
+export default class InlinePlugin {
   apply(compiler) {
     compiler.hooks.compilation.tap("inline-plugin", (compilation) => {
       const hooks = HtmlWebpackPlugin.getHooks(compilation);
@@ -50,5 +50,3 @@ class InlinePlugin {
     });
   }
 }
-
-module.exports = InlinePlugin;

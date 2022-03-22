@@ -28,24 +28,34 @@ export class Val implements Tagged, Indexed {
       return;
     }
     const sub = obj["sub"];
+
     if (!("task" in obj)) {
       return;
     }
     const task = obj["task"];
+
     for (const type of valTypes) {
-      if (type in obj) {
-        const val = new Val(sub, task, type, obj[type]);
-        if ("ses" in obj) {
-          val.ses = obj["ses"];
-        }
-        if ("run" in obj) {
-          val.run = obj["run"];
-        }
-        if ("dir" in obj) {
-          val.dir = obj["dir"];
-        }
-        yield val;
+      if (!(type in obj)) {
+        continue;
       }
+      let number = obj[type];
+      if (isNaN(number)) {
+        continue;
+      }
+
+      const val = new Val(sub, task, type, number);
+
+      if ("ses" in obj) {
+        val.ses = obj["ses"];
+      }
+      if ("run" in obj) {
+        val.run = obj["run"];
+      }
+      if ("dir" in obj) {
+        val.dir = obj["dir"];
+      }
+
+      yield val;
     }
   }
 }
