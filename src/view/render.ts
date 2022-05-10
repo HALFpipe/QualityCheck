@@ -9,8 +9,8 @@ export class Attribute {
 }
 
 // inspired by hyperscript
-export function h(tag: string, attrs: Attribute[], children: Node[]): HTMLElement {
-  let element: HTMLElement = document.createElement(tag);
+export function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Attribute[], children: Node[]): HTMLElementTagNameMap[K] {
+  let element = document.createElement(tag);
 
   for (let attr of attrs) {
     element.setAttribute(attr.key, attr.value);

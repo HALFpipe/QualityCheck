@@ -124,7 +124,7 @@ export class RatingsViewModel {
     let scanKeyPath: string = "";
     let scan: Scan;
     let imgRatingProperty: RatingProperty;
-    for (const [i, img] of this.model.imgsArray.entries()) {
+    for (const img of this.model.imgsArray.values()) {
       if (!this.model.ratingPropertiesByHash.has(img.hash)) {
         throw new Error(`RatingProperty not found for img '${img.hash}'`);
       }
@@ -179,10 +179,6 @@ export class RatingsViewModel {
       }
     }
   }
-
-  // get img(): Img {
-  //   return
-  // }
 
   set(hash: string, rating: Rating): void {
     if (!this.model.ratingPropertiesByHash.has(hash)) {
