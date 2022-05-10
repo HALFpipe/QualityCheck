@@ -66,7 +66,7 @@ export class Model {
 
   static async load(): Promise<Model> {
     const model = new Model();
-    
+
     const reportDfds: Array<Deferred> = new Array<Deferred>();
     for (let i = 0; i < 4; i++) {
       reportDfds.push(new Deferred());
@@ -95,7 +95,7 @@ export class Model {
                 model.preprocStatuses[sub].push(preprocStatus);
 
             } else if ("path" in element) {  // reportimgs.js
-              const img = await Img.load(element);
+              const img = Img.load(element);
               if (img !== null) {
                 model.addImg(img);
               }
@@ -103,7 +103,7 @@ export class Model {
             } else if ("node" in element) {  // reporterror.js
               const nodeError = await NodeError.load(element);
               const sub = nodeError.sub;
-              
+
               if (!(sub in model.preprocStatuses)) {
                 model.nodeErrors[sub] = new Array<NodeError>();
               }

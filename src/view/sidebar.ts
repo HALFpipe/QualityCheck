@@ -34,10 +34,20 @@ export class Sidebar extends HTMLElement {
     this.viewModel = viewModel;
 
     const importButton = h(
-      "button",
+      "a",
       [new Attribute("class", "dropdown-item")],
       [t("Import...")]
     );
+    const fileInput = h(
+      "input",
+      [
+        new Attribute("type", "file"),
+        new Attribute("hidden", ""),
+        new Attribute("accept", ".json"),
+      ],
+      []
+    );
+
     const exportButton = h(
       "a",
       [
@@ -47,6 +57,7 @@ export class Sidebar extends HTMLElement {
       ],
       [t("Export")]
     );
+
     const viewTypeButton: { [key in ViewType]?: HTMLElement } = {};
     for (const viewType of viewTypes) {
       viewTypeButton[viewType] = h(
@@ -91,7 +102,7 @@ export class Sidebar extends HTMLElement {
           "ul",
           [new Attribute("class", "dropdown-menu")],
           [
-            // h("li", [], [importButton]),
+            h("li", [], [importButton, fileInput]),
             h("li", [], [exportButton]),
             h("li", [], [this.viewTypeButtonGroup]),
             h("li", [], [this.sortKeyButtonGroup]),
@@ -107,9 +118,35 @@ export class Sidebar extends HTMLElement {
       menuButton.classList.toggle("active");
     });
 
-    // importButton.addEventListener("click", () => {
-    //   //
-    // });
+    importButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      fileInput.click();
+    });
+    fileInput.addEventListener("change", () => {
+      const [ file ] = fileInput.files;
+      const reader = new FileReader();
+
+      reader.addEventListener("load", () => {
+        const database = viewModel.model.database;
+
+        const objs = JSON.parse(reader.result as string);
+        for (const obj of objs) {
+          const { rating } = obj;
+          delete obj["rating"];
+
+          if (rating == "none") {
+            continue;
+          }
+
+          for (const img of database.findAll(obj)) {
+            viewModel.ratingsViewModel.set(img.hash, rating);
+          }
+        }
+      });
+
+      reader.readAsText(file);
+    });
+
     exportButton.addEventListener("click", () => {
       const objs = new Array();
       for (const [hash, ratingProperty] of viewModel.model.ratingPropertiesByHash) {

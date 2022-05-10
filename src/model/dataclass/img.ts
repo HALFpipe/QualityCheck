@@ -11,6 +11,12 @@ import {
 import { keyPath } from "../key-path";
 import { Indexed, Tagged } from "../types";
 
+interface Loadable extends Tagged {
+  path: string;
+  hash: string;
+  desc: string;
+};
+
 export class Img implements Indexed, Tagged {
   index: number;
 
@@ -60,7 +66,7 @@ export class Img implements Indexed, Tagged {
     return Img.relatedImgsMap.get(this.keyPath);
   }
 
-  static async load(obj: Tagged): Promise<Img | null> {
+  static load(obj: Loadable): Img | null {
     if (!("sub" in obj)) {
       console.warn("Val obj missing 'sub':", obj);
       return null;
