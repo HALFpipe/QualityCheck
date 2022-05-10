@@ -23,37 +23,73 @@ export class Database {
 
   put(imgsArray: Array<Img>): void {
     this.imgsArray = imgsArray;
+
     for (const img of this.imgsArray) {
-      for (const k of entities) {
-        const v = img[k];
-        const valuedict = this.indexSets[k];
-        if (!(v in valuedict)) {
-          valuedict[v] = new FastSet<number>();
+      for (const key of entities) {
+        const value = img[key];
+
+        const valueMap = this.indexSets[key];
+
+        if (!(value in valueMap)) {
+          valueMap[value] = new FastSet<number>();
         }
-        valuedict[v].add(img.index);
+
+        valueMap[value].add(img.index);
       }
     }
   }
 
-  closest(obj: Tagged, entities: Entity[]): Img {
-    let set: FastSet<number> | null = null;
-    for (const k of entities) {
-      if (obj[k] !== null && obj[k] in this.indexSets[k]) {
-        if (set === null) {
-          set = this.indexSets[k][obj[k]];
-        } else {
-          const candidateSet = set.intersection(this.indexSets[k][obj[k]]);
-          if (candidateSet.length === 0) {
-            break;
-          } else {
-            set = candidateSet;
-          }
+  matches(obj: Tagged, exact: boolean, basedOnEntities?: Entity[]): number[] | null {
+    basedOnEntities = basedOnEntities || [...entities];
+
+    let matches: FastSet<number> | null = null;
+    for (const key of basedOnEntities) {
+      const value = obj[key];
+
+      if (value === null) {
+        continue;
+      }
+      if (!(value in this.indexSets[key])) {
+        continue;
+      }
+
+      let indexSet = this.indexSets[key][value];
+      if (matches === null) {
+        matches = indexSet;
+      } else {
+        indexSet = matches.intersection(indexSet);
+        if (!exact && indexSet.length === 0) {
+          break;
         }
+
+        matches = indexSet;
       }
     }
-    if (set !== null) {
-      return this.imgsArray[set.sorted()[0]];
+
+    if (matches === null) {
+      return null;
     }
-    return this.imgsArray[0]; // return default if no match
+
+    return matches.toArray().sort();
+  }
+
+  findAll(obj: Tagged): Img[] {
+    const matches = this.matches(obj, true);
+
+    if (matches === null) {
+      return Array();
+    }
+
+    return matches.map((index) => this.imgsArray[index]);
+  }
+
+  closest(obj: Tagged, basedOnEntities?: Entity[]): Img {
+    const matches = this.matches(obj, false, basedOnEntities);
+
+    if (matches === null || matches.length < 1) {
+      return this.imgsArray[0];  // default if no match
+    }
+
+    return this.imgsArray[matches[0]];
   }
 }
