@@ -36,7 +36,7 @@ export class Sidebar extends HTMLElement {
     const importButton = h(
       "a",
       [new Attribute("class", "dropdown-item")],
-      [t("Import...")]
+      [t("Import")]
     );
     const fileInput = h(
       "input",
@@ -134,11 +134,12 @@ export class Sidebar extends HTMLElement {
           const { rating } = obj;
           delete obj["rating"];
 
-          if (rating == "none") {
+          if (rating === "none") {
             continue;
           }
 
-          for (const img of database.findAll(obj)) {
+          const imgs = database.findAll(obj);
+          for (const img of imgs) {
             viewModel.ratingsViewModel.set(img.hash, rating);
           }
         }

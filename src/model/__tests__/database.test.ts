@@ -16,11 +16,11 @@ describe("Database", () => {
   database.put(imgsArray);
 
   it("gets closest image", () => {
-    let closestImg = database.closest({"sub": "01", "type": "tsnr_rpt"});
+    let closestImg = database.closest({sub: "01", type: "tsnr_rpt"});
     expect(closestImg.sub).toBe("01");
     expect(closestImg.type).toBe("skull_strip_report");
 
-    closestImg = database.closest({"sub": "03", "type": "tsnr_rpt"});
+    closestImg = database.closest({sub: "03", type: "tsnr_rpt"});
     expect(closestImg.sub).toBe("01");
     expect(closestImg.type).toBe("skull_strip_report");
   });
@@ -29,7 +29,10 @@ describe("Database", () => {
     let [ exactImg ] = database.findAll({sub: "01", type: "skull_strip_report"});
     expect(exactImg.hash).toBe("1");
 
-    let result = database.findAll({sub: "03"});
+    let result = database.findAll({sub: "03", type: "skull_strip_report"});
+    expect(result.length).toBe(0);
+
+    result = database.findAll({sub: "03"});
     expect(result.length).toBe(0);
   });
 
