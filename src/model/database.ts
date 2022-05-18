@@ -46,23 +46,33 @@ export class Database {
     for (const key of basedOnEntities) {
       const value = obj[key];
 
-      if (value === null) {
+      if (value == null) {  // == catches both `null` and `undefined`
         continue;
       }
-      if (!(value in this.indexSets[key])) {
-        continue;
+      if (!(value in this.indexSets[key])) {  // unknown value
+        if (exact) {
+          return null;
+        } else {
+          continue;
+        }
       }
 
-      let indexSet = this.indexSets[key][value];
-      if (matches === null) {
+      const indexSet = this.indexSets[key][value];
+
+      if (matches == null) {
         matches = indexSet;
       } else {
-        indexSet = matches.intersection(indexSet);
-        if (!exact && indexSet.length === 0) {
-          break;
+        const intersectionSet = matches.intersection(indexSet);
+
+        if (intersectionSet.length === 0) {
+          if (exact) {
+            return null;
+          } else {
+            break;  // return what we have
+          }
         }
 
-        matches = indexSet;
+        matches = intersectionSet;
       }
     }
 
