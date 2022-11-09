@@ -40,7 +40,7 @@
     "got": "^12.1.0",
     "html-webpack-plugin": "^5.5.0",
     "inflected": "^2.1.0",
-    "node-sass": "^7.0.1",
+    "node-sass": "^7.0.3",
     "postcss": "^8.4.13",
     "postcss-inline-svg": "^5.0.0",
     "postcss-loader": "^6.2.1",
