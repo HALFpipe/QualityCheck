@@ -41,7 +41,7 @@
     "html-webpack-plugin": "^5.5.0",
     "inflected": "^2.1.0",
     "node-sass": "^7.0.3",
-    "postcss": "^8.4.13",
+    "postcss": "^8.4.31",
     "postcss-inline-svg": "^5.0.0",
     "postcss-loader": "^7.2.4",
     "postcss-normalize": "^10.0.1",
