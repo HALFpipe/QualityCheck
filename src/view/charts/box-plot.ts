@@ -29,6 +29,7 @@ export class BoxPlot extends HTMLElement {
   radius: number;
   min: number;
   max: number;
+  layoutWidth: number | null = null;
 
   points: Array<HTMLElement> = new Array<HTMLElement>();
   container: HTMLElement;
@@ -187,7 +188,11 @@ export class BoxPlot extends HTMLElement {
           }
           if (entry.contentRect) {
             const width = entry.contentRect.width;
-            this.layout(width);
+            // width is 0 while the charts view is detached; layout only depends on width
+            if (width > 0 && width !== this.layoutWidth) {
+              this.layoutWidth = width;
+              this.layout(width);
+            }
           }
         }
       }
@@ -207,12 +212,13 @@ export class BoxPlot extends HTMLElement {
 
       // greedily find y
       const ins = new IntervalSet();
-      for (const p of stack) {
-        const d = x - p.x;
-        const a = Math.sqrt(this.radius * this.radius - d * d);
-        const interval = new Interval(p.y - a, p.y + a);
-        ins.add(interval);
-      }
+      ins.addAll(
+        stack.map((p) => {
+          const d = x - p.x;
+          const a = Math.sqrt(this.radius * this.radius - d * d);
+          return new Interval(p.y - a, p.y + a);
+        })
+      );
       const y = ins.findXWithNoOverlapClosestTo0(this.radius, false);
 
       stack.push(new Point2D(x, y));
