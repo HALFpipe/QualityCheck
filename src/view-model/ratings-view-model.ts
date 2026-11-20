@@ -1,5 +1,3 @@
-import SortedSet from "collections/sorted-set";
-
 import {
   Model,
   Rating,
@@ -12,17 +10,18 @@ import {
   keyPath,
   Location,
   Tagged,
+  SortedIndexSet,
 } from "../model";
 
 export type IndexSets = {
-  [key in Rating]: SortedSet<number>;
+  [key in Rating]: SortedIndexSet;
 };
 
 class IndexSetsImpl implements IndexSets {
-  none = new SortedSet<number>();
-  good = new SortedSet<number>();
-  uncertain = new SortedSet<number>();
-  bad = new SortedSet<number>();
+  none = new SortedIndexSet();
+  good = new SortedIndexSet();
+  uncertain = new SortedIndexSet();
+  bad = new SortedIndexSet();
 }
 
 export class Scan implements Tagged {

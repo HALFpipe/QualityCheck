@@ -36,4 +36,21 @@ describe("Database", () => {
     expect(result.length).toBe(0);
   });
 
+  it("orders matches numerically with 10+ images", () => {
+    const imgs = [...Array(12).keys()].map((i) => {
+      const sub = i === 2 || i === 10 ? "x" : `s${i}`;
+      const img = Img.load({ sub, desc: "skull_strip_report", hash: `h${i}`, path });
+      img.index = i;
+      return img;
+    });
+    // index 10 goes in before index 2, so insertion order alone can't pass this
+    const shuffled = [imgs[10], ...imgs.filter((img) => img.index !== 10)];
+    const db = new Database();
+    db.put(shuffled);
+    db.imgsArray = imgs;
+
+    expect(db.closest({ sub: "x" }).index).toBe(2);
+    expect(db.findAll({ sub: "x" }).map((img) => img.index)).toEqual([2, 10]);
+  });
+
 });
