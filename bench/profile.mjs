@@ -3,10 +3,11 @@
 // loads it from file:// in headless Chrome over CDP, and prints timings as JSON.
 // --cpu also writes .cpuprofile files (open in Chrome DevTools > Performance) to workdir.
 import { spawn } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import path from "node:path";
 import { writeReport } from "./make-report.mjs";
+import { stopChrome } from "./chrome.mjs";
 
 const [indexHtml, nSubjectsStr, workdir] = process.argv.slice(2);
 const wantCpu = process.argv.includes("--cpu");
@@ -129,8 +130,7 @@ for (let i = 0; i < 6000 && !painted && !fatal(); i++) {
 if (!painted) {
   console.error(`app did not render after ${Date.now() - loadStart} ms`);
   for (const e of pageErrors) console.error(`  page error: ${e}`);
-  chrome.kill();
-  await rm(userDataDir, { recursive: true, force: true });
+  await stopChrome(chrome, userDataDir);
   process.exit(1);
 }
 await stopCpu("load");
@@ -271,8 +271,7 @@ if (wantCpu) {
 result.pageErrors = [...new Set(pageErrors.map((e) => e.split("\n")[0]))];
 console.log(JSON.stringify(result, null, 2));
 await send("Browser.close").catch(() => {});
-chrome.kill();
-await rm(userDataDir, { recursive: true, force: true });
+await stopChrome(chrome, userDataDir);
 process.exit(0);
 
 function median(xs) {

@@ -2,10 +2,11 @@
 // Rates a few images, then checks that every mosaic block on the charts view shows exactly its
 // set's points in index order, with a matching count label. Exits 1 on any mismatch.
 import { spawn } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import path from "node:path";
 import { writeReport } from "./make-report.mjs";
+import { stopChrome } from "./chrome.mjs";
 
 const [indexHtml, nSubjectsStr, workdir] = process.argv.slice(2);
 const reportDir = path.join(workdir, `check-${nSubjectsStr}-${path.basename(path.dirname(indexHtml))}`);
@@ -106,6 +107,5 @@ const result = await evaluate(`(async () => {
 })()`);
 
 console.log(JSON.stringify(result, null, 2));
-chrome.kill();
-await rm(userDataDir, { recursive: true, force: true }).catch(() => {});
+await stopChrome(chrome, userDataDir);
 process.exit(result.problems.length ? 1 : 0);
