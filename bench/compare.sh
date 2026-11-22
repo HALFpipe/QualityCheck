@@ -24,8 +24,14 @@ trap 'git worktree remove --force .ci-base' EXIT
 (
   cd .ci-base
   node --version
-  npm ci --ignore-scripts
-  npm install --no-save --ignore-scripts sass@1.108.2
+  # older refs depend on node-sass 7, which does not compile on current Node;
+  # sass-loader uses Dart Sass instead when it is installed
+  if grep -q '"node-sass"' package.json; then
+    npm ci --ignore-scripts
+    npm install --no-save --ignore-scripts sass@1.108.2
+  else
+    npm ci
+  fi
   npm run build
 )
 cp .ci-base/dist/index.html "$out/builds/base/"

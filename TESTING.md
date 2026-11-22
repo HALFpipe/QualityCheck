@@ -47,14 +47,11 @@ Without mise, any Node 22 or newer should work. The browser scripts need Node's 
 and `WebSocket`. Only the pinned version is tested. The plain commands are:
 
 ```sh
-npm ci --ignore-scripts
-npm install --no-save --ignore-scripts sass@1.108.2
+npm ci
 npm run build
 ```
 
-A plain `npm ci` fails on current Node, because `node-sass` 7 won't compile. `--ignore-scripts`
-skips that build. With Dart Sass (`sass`) installed alongside it, `sass-loader` uses Dart Sass in
-place of `node-sass`. The output goes to `dist/index.html`.
+The output goes to `dist/index.html`.
 
 If Chrome isn't on your `PATH` as `google-chrome`, set `CHROME_BIN`, for example
 `CHROME_BIN=chromium-browser`.
