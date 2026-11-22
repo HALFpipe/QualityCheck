@@ -21,6 +21,7 @@ jobs:
     env:
       BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || inputs.base }}
       CHROME_BIN: google-chrome
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,10 +33,14 @@ jobs:
           echo "BUILDS=$RUNNER_TEMP/builds" >> "$GITHUB_ENV"
           echo "RESULTS=$RUNNER_TEMP/results" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-node@v4
+      # installs the Node version pinned in .mise.toml
+      - uses: jdx/mise-action@v2
+
+      - uses: actions/cache@v4
         with:
-          node-version: "24"
-          cache: npm
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
 
       # node-sass 7 does not compile on current Node; sass-loader uses Dart Sass when present
       - name: Install (head)
@@ -60,8 +65,10 @@ jobs:
         run: |
           base=$(git rev-parse --verify -q "$BASE_REF^{commit}" || git rev-parse --verify "origin/$BASE_REF^{commit}")
           echo "Comparing against $base"
-          git worktree add --detach "$RUNNER_TEMP/base" "$base"
-          cd "$RUNNER_TEMP/base"
+          # inside the workspace, so the base build uses the same .mise.toml pin
+          git worktree add --detach .ci-base "$base"
+          cd .ci-base
+          node --version
           npm ci --ignore-scripts
           npm install --no-save --ignore-scripts sass@1.108.2
           npm run build

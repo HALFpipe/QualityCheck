@@ -21,8 +21,15 @@ page runs against a report, so unit tests alone aren't enough.
 
 ## 1. Setup
 
-You need Node 22 or newer and Google Chrome. The browser scripts use Node's built-in `fetch` and
-`WebSocket`, which is why Node 22 is the minimum.
+You need Google Chrome and the Node version pinned in `.mise.toml` (currently the Node 26 LTS
+line). CI uses the same pin. With [mise](https://mise.jdx.dev):
+
+```sh
+mise trust && mise install
+```
+
+Without mise, any Node 22 or newer should work. The browser scripts need Node's built-in `fetch`
+and `WebSocket`. Only the pinned version is tested.
 
 ```sh
 npm ci --ignore-scripts
