@@ -1,0 +1,57 @@
+name: browser tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Ref to compare against"
+        default: main
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || inputs.base }}
+      CHROME_BIN: google-chrome
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # installs the Node version pinned in .mise.toml
+      - uses: jdx/mise-action@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
+
+      - name: Unit tests
+        run: mise run test
+
+      - name: No collections dependency
+        run: |
+          if grep -rnE "from ['\"]collections|require\(['\"]collections" src; then exit 1; fi
+          node -e 'const p = require("./package.json"); if ("collections" in {...p.dependencies, ...p.devDependencies}) process.exit(1)'
+
+      - name: Browser checks against base
+        env:
+          ALLOW_LAYOUT_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'layout-change') && '1' || '0' }}
+        run: mise run bench:compare "$BASE_REF" "$RUNNER_TEMP/bench"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-results
+          path: ${{ runner.temp }}/bench/results

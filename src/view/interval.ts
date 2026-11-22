@@ -1,5 +1,3 @@
-import { PropertyComparator } from "../model";
-
 export class Interval {
   lower: number;
   upper: number;
@@ -10,7 +8,7 @@ export class Interval {
   }
 }
 
-const ic = PropertyComparator<Interval>("lower");
+const ic = (a: Interval, b: Interval): number => a.lower - b.lower;
 
 export class IntervalSet {
   // adapted from https://gist.github.com/vrachieru/5649bce26004d8a4682b
@@ -20,7 +18,15 @@ export class IntervalSet {
   constructor() {}
 
   add(i: Interval): void {
-    const arr = [...this.stack, i];
+    this.addAll([i]);
+  }
+
+  // Sorts and merges once, so adding k intervals costs O(k log k) instead of O(k² log k).
+  addAll(intervals: Array<Interval>): void {
+    if (intervals.length === 0) {
+      return;
+    }
+    const arr = [...this.stack, ...intervals];
     arr.sort(ic);
     this.stack = [arr.shift()];
     for (const j of arr) {

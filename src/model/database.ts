@@ -1,5 +1,3 @@
-import FastSet from "collections/fast-set";
-
 import { Img } from "./dataclass/img";
 
 import { Entity, entities } from "./record/entity";
@@ -9,7 +7,7 @@ export class Database {
   // partial re-implementation of pipeline database
 
   imgsArray: Array<Img>;
-  indexSets: { [key in Entity]: { [key: string]: FastSet<number> } } = {
+  indexSets: { [key in Entity]: { [key: string]: Set<number> } } = {
     sub: {},
     suffix: {},
     task: {},
@@ -31,7 +29,7 @@ export class Database {
         const valueMap = this.indexSets[key];
 
         if (!(value in valueMap)) {
-          valueMap[value] = new FastSet<number>();
+          valueMap[value] = new Set<number>();
         }
 
         valueMap[value].add(img.index);
@@ -42,7 +40,7 @@ export class Database {
   matches(obj: Tagged, exact: boolean, basedOnEntities?: Entity[]): number[] | null {
     basedOnEntities = basedOnEntities || [...entities];
 
-    let matches: FastSet<number> | null = null;
+    let matches: Set<number> | null = null;
     for (const key of basedOnEntities) {
       const value = obj[key];
 
@@ -62,9 +60,9 @@ export class Database {
       if (matches == null) {
         matches = indexSet;
       } else {
-        const intersectionSet = matches.intersection(indexSet);
+        const intersectionSet = new Set([...matches].filter((v) => indexSet.has(v)));
 
-        if (intersectionSet.length === 0) {
+        if (intersectionSet.size === 0) {
           if (exact) {
             return null;
           } else {
@@ -80,7 +78,7 @@ export class Database {
       return null;
     }
 
-    return matches.toArray().sort();
+    return [...matches].sort((a, b) => a - b);
   }
 
   findAll(obj: Tagged): Img[] {

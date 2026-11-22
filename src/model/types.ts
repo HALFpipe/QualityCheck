@@ -1,8 +1,8 @@
-import SortedSet from "collections/sorted-set";
+import { SortedIndexSet } from "./sorted-index-set";
 
 import { Entity } from "./record/entity";
 
-export type Collection<T> = SortedSet<T> | Array<T>;
+export type Collection = SortedIndexSet | Array<number>;
 
 export interface Indexed {
   index: number;

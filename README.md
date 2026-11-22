@@ -6,3 +6,5 @@ Welcome to the HALFpipe/QualityCheck
 Please see the main project documentation at <https://github.com/HALFpipe/HALFpipe>.
 
 For an example dataset, please use <https://download.fmri.science/reports/ds-piop1.zip> or <https://download.fmri.science/reports/ds-piop2.zip>.
+
+For building and testing changes, see [TESTING.md](TESTING.md).

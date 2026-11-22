@@ -1,10 +1,10 @@
-import SortedSet from "collections/sorted-set";
 import { format } from "d3-format";
 
 import { pluralize } from "inflected";
 
 import { Entity } from "../../model/record/entity";
 import { Collection, Indexed, Hrefable, Tagged } from "../../model/types";
+import { SortedIndexSet } from "../../model/sorted-index-set";
 
 import { Attribute, h, t } from "../render";
 import { PointFactory } from "../point";
@@ -19,7 +19,7 @@ export class MosaicPlot<
   }
 
   objs: Array<T>;
-  sets: { [key in P]: Collection<number> };
+  sets: { [key in P]: Collection };
 
   points: Array<HTMLElement>;
   blocks: Array<HTMLElement> = new Array<HTMLElement>();
@@ -27,7 +27,7 @@ export class MosaicPlot<
   constructor(
     entities: Array<keyof T & Entity>,
     objs: Array<T>,
-    sets: { [key in P]: Collection<number> }, // disjoint
+    sets: { [key in P]: Collection }, // disjoint
     displayNames: { [key in P]: string },
     colors: { [key in P]: string },
     noun: string
@@ -40,16 +40,11 @@ export class MosaicPlot<
     const factory = new PointFactory(entities);
     this.points = this.objs.map((entry) => factory.create(entry));
 
-    for (const [key, set] of Object.entries<Collection<number>>(sets)) {
+    for (const [key, set] of Object.entries<Collection>(sets)) {
       const displayName = displayNames[key];
       const color = colors[key];
 
-      let pointsInSet: Array<HTMLElement>;
-      if (set instanceof SortedSet) {
-        pointsInSet = set.map((i) => this.points[i]);
-      } else {
-        pointsInSet = set.map((i) => this.points[i]);
-      }
+      const pointsInSet = set.map((i: number) => this.points[i]);
 
       const pointsContainer = h("div", [new Attribute("class", "container")], pointsInSet);
 
@@ -87,8 +82,7 @@ export class MosaicPlot<
       layout(set.length);
       this.blocks.push(block);
 
-      if (set instanceof SortedSet) {
-        set.addOwnPropertyChangeListener("length", layout);
+      if (set instanceof SortedIndexSet) {
         set.addRangeChangeListener(
           (plus: Array<number>, minus: Array<number>, at: number): void => {
             for (const i of minus) {
@@ -103,6 +97,7 @@ export class MosaicPlot<
                 pointsContainer.appendChild(this.points[i]);
               }
             }
+            layout(set.length);
           }
         );
       }

@@ -220,6 +220,10 @@ export class Navigator extends HTMLElement {
   }
 
   private scrollToActiveItem(): void {
+    // the ResizeObserver fires on load, before any image has been opened
+    if (this.levelActiveItem["right"] === null) {
+      return;
+    }
     this.scrollToPosition(this.levelActiveItem["right"].point, 0);
     this.propagatePositionParent(this.levelActiveItem["right"], 0);
   }

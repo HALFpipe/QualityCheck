@@ -11,31 +11,21 @@ jobs:
 
     timeout-minutes: 30
 
+    env:
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
+    permissions:
+      contents: write
+
     steps:
+      - uses: actions/checkout@v4
 
-      - uses: actions/checkout@v2
+      # installs the Node version pinned in .mise.toml
+      - uses: jdx/mise-action@v2
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "16"
+      - run: mise run build
 
-      - run: npm ci
-      - run: npm run build
-
-      - uses: actions/create-release@v1
-        id: create_release
+      - name: Create draft release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/index.html
-          asset_name: index.html
-          asset_content_type: text/html
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/index.html --draft --title "Release $GITHUB_REF_NAME"
