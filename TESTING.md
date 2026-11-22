@@ -26,10 +26,25 @@ line). CI uses the same pin. With [mise](https://mise.jdx.dev):
 
 ```sh
 mise trust && mise install
+mise run build
 ```
 
+`.mise.toml` also defines tasks for the routine steps in this guide. `mise tasks` lists them:
+
+| Task | Does |
+|---|---|
+| `mise run install` | Installs npm dependencies. Skips if `package-lock.json` hasn't changed. |
+| `mise run build` | Builds `dist/index.html`. Skips if nothing it depends on has changed. |
+| `mise run test` | Runs the unit tests. |
+| `mise run report [subjects]` | Generates a synthetic report with the current build (section 3.1). |
+| `mise run example <piop1\|piop2>` | Downloads a public example report and adds the current build (section 3.2). |
+| `mise run open <dir>` | Opens a report in Chrome with a fresh profile (section 3.3). |
+| `mise run bench:compare [base] [out]` | Runs the CI browser checks against a base ref (section 7). |
+
+Tasks that need a build run `install` and `build` first. CI uses the same tasks.
+
 Without mise, any Node 22 or newer should work. The browser scripts need Node's built-in `fetch`
-and `WebSocket`. Only the pinned version is tested.
+and `WebSocket`. Only the pinned version is tested. The plain commands are:
 
 ```sh
 npm ci --ignore-scripts
@@ -65,10 +80,19 @@ the DOM, layout, or how the page loads, use the browser checks in section 5.
 `report*.js` files and the placeholder images.
 
 ```sh
-node bench/make-report.mjs ~/qc-reports/demo 200    # 200 subjects
-cp dist/index.html ~/qc-reports/demo/
-google-chrome "file://$HOME/qc-reports/demo/index.html"
+mise run report 200                   # writes reports/synthetic-200/ with the current build
+mise run open reports/synthetic-200
 ```
+
+Without mise:
+
+```sh
+node bench/make-report.mjs reports/synthetic-200 200
+cp dist/index.html reports/synthetic-200/
+google-chrome "file://$PWD/reports/synthetic-200/index.html"
+```
+
+`reports/` is gitignored. To put reports somewhere else, set `QC_REPORTS`.
 
 Each subject gets 10 images: 2 anatomical, plus 4 functional for each of two tasks (`rest` and
 `faces`). Each subject also gets four QC values per task (`fd_mean`, `fd_perc`, `aroma_noise_frac`,
@@ -89,13 +113,22 @@ same. Don't treat it as proof that real reports work.
 
 ### 3.2 Real reports
 
-Public example reports are linked from the README:
+There are two public example reports, also linked from the README:
 
-- <https://download.fmri.science/reports/ds-piop1.zip>
-- <https://download.fmri.science/reports/ds-piop2.zip>
+| Name | Download | Size |
+|---|---|---|
+| `piop1` | <https://download.fmri.science/reports/ds-piop1.zip> | 4.0 GB |
+| `piop2` | <https://download.fmri.science/reports/ds-piop2.zip> | 2.2 GB |
 
-Unzip one, copy in your `dist/index.html`, and open it. Use these to test anything a user would
-see.
+```sh
+mise run example piop2                # downloads once, then adds the current build
+mise run open <directory it prints>
+```
+
+The task downloads the zip into `reports/`, unzips it, and deletes the zip. If a download is
+interrupted, running the task again resumes it. Once the report is extracted, later runs skip the
+download and copy in your current `dist/index.html`, replacing whatever version the zip came
+with. Use these reports to test anything a user would see.
 
 If you test with a report from your own study, treat it as participant data. Keep it outside the
 repository, and never commit it or attach it to an issue or pull request.
@@ -108,7 +141,8 @@ The app saves each rating in `localStorage`, keyed by the image hash alone. Chro
 other one. To test ratings from a clean state, open the report in a fresh profile:
 
 ```sh
-google-chrome --user-data-dir="$(mktemp -d)" "file://$HOME/qc-reports/demo/index.html"
+mise run open reports/synthetic-200
+# or: google-chrome --user-data-dir="$(mktemp -d)" "file://$PWD/reports/synthetic-200/index.html"
 ```
 
 Or clear storage between tests (DevTools → Application → Local storage → `file://` → Clear). The
@@ -227,13 +261,15 @@ It prints a table of results, and writes it to the job summary when it runs in G
 coverage.
 
 `.github/workflows/browser-tests.yml` runs on pull requests to `main`, on pushes to `main`, and on
-demand. It:
+demand. It runs the unit tests, then `mise run bench:compare` against the pull request's base,
+and uploads the results as the `browser-results` artifact. `bench:compare` (`bench/compare.sh`):
 
-1. builds the pull request (head) and its base branch
-2. runs the unit tests
-3. runs `profile.mjs` for base at 200 and 500 subjects, and for head at 200, 500, 2,000 and 4,000
-4. runs `check-ratings.mjs` on head at 4,000 subjects
-5. runs `ci-assert.mjs` and uploads the results as the `browser-results` artifact
+1. builds the base ref in a temporary worktree (`.ci-base/`)
+2. runs `profile.mjs` for base at 200 and 500 subjects, and for head at 200, 500, 2,000 and 4,000
+3. runs `check-ratings.mjs` on head at 4,000 subjects
+4. runs `ci-assert.mjs`
+
+All three workflows install Node from `.mise.toml` and build with the mise tasks.
 
 ### Budgets
 
@@ -260,24 +296,16 @@ why.
 
 ## 7. Comparing against another build
 
-To compare your branch with `main`, build each one into its own directory. The directory name
-becomes the build's label in the results.
+To run the same checks as CI, comparing your working tree against `main` or any other ref:
 
 ```sh
-git worktree add ../qc-main main
-(cd ../qc-main && npm ci --ignore-scripts && npm install --no-save --ignore-scripts sass@1.108.2 && npm run build)
-mkdir -p /tmp/qc/builds/base /tmp/qc/builds/head
-cp ../qc-main/dist/index.html /tmp/qc/builds/base/
-cp dist/index.html /tmp/qc/builds/head/
-
-for spec in base:200 head:200 base:500 head:500 head:2000 head:4000; do
-  b=${spec%%:*} n=${spec##*:}
-  node bench/profile.mjs /tmp/qc/builds/$b/index.html $n /tmp/qc/work > /tmp/qc/$b-$n.json
-done
-node bench/ci-assert.mjs /tmp/qc
-
-git worktree remove ../qc-main
+mise run bench:compare               # against main, results in .bench/results
+mise run bench:compare v0.3.0 /tmp/qc
 ```
+
+This takes a couple of minutes. It prints the results table at the end and exits 1 if any check
+fails. The JSON for each run stays in `<out>/results` for a closer look. `.bench/` is gitignored.
+Without mise, build first and run `bench/compare.sh [base] [out]`.
 
 For a manual comparison, generate the same report twice, copy in a different build each time,
 and open the two side by side in windows of the same size.

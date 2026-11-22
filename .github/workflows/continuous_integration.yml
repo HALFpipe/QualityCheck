@@ -14,6 +14,9 @@ jobs:
 
     timeout-minutes: 30
 
+    env:
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,19 +29,14 @@ jobs:
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
 
-      # node-sass 7 does not compile on current Node; sass-loader uses Dart Sass when present
-      - run: |
-          npm ci --ignore-scripts
-          npm install --no-save --ignore-scripts sass@1.108.2
-
-      - run: npm run build
+      - run: mise run build
 
       - uses: actions/upload-artifact@v4
         with:
           name: index.html
           path: dist/index.html
 
-      - run: npm test
+      - run: mise run test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

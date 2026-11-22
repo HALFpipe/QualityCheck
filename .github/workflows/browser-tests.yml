@@ -28,11 +28,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set paths
-        run: |
-          echo "BUILDS=$RUNNER_TEMP/builds" >> "$GITHUB_ENV"
-          echo "RESULTS=$RUNNER_TEMP/results" >> "$GITHUB_ENV"
-
       # installs the Node version pinned in .mise.toml
       - uses: jdx/mise-action@v2
 
@@ -42,58 +37,21 @@ jobs:
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
 
-      # node-sass 7 does not compile on current Node; sass-loader uses Dart Sass when present
-      - name: Install (head)
-        run: |
-          npm ci --ignore-scripts
-          npm install --no-save --ignore-scripts sass@1.108.2
-
-      - name: Build (head)
-        run: |
-          npm run build
-          mkdir -p "$BUILDS/head" && cp dist/index.html "$BUILDS/head/"
-
       - name: "TC-0: unit tests"
-        run: npm test
+        run: mise run test
 
       - name: "TC-1: no collections dependency"
         run: |
           if grep -rnE "from ['\"]collections|require\(['\"]collections" src; then exit 1; fi
           node -e 'const p = require("./package.json"); if ("collections" in {...p.dependencies, ...p.devDependencies}) process.exit(1)'
 
-      - name: Build (base)
-        run: |
-          base=$(git rev-parse --verify -q "$BASE_REF^{commit}" || git rev-parse --verify "origin/$BASE_REF^{commit}")
-          echo "Comparing against $base"
-          # inside the workspace, so the base build uses the same .mise.toml pin
-          git worktree add --detach .ci-base "$base"
-          cd .ci-base
-          node --version
-          npm ci --ignore-scripts
-          npm install --no-save --ignore-scripts sass@1.108.2
-          npm run build
-          mkdir -p "$BUILDS/base" && cp dist/index.html "$BUILDS/base/"
-
-      - name: Profile base and head
-        run: |
-          mkdir -p "$RESULTS"
-          for spec in base:200 head:200 base:500 head:500 head:2000 head:4000; do
-            build=${spec%%:*} n=${spec##*:}
-            echo "::group::$build, $n subjects"
-            node bench/profile.mjs "$BUILDS/$build/index.html" "$n" "$RUNNER_TEMP/work" > "$RESULTS/$build-$n.json"
-            echo "::endgroup::"
-          done
-
-      - name: "TC-6, TC-7: ratings move points correctly (40k images)"
-        run: node bench/check-ratings.mjs "$BUILDS/head/index.html" 4000 "$RUNNER_TEMP/work" | tee "$RESULTS/ratings.json"
-
-      - name: "TC-2 to TC-5: compare and check budgets"
+      - name: "TC-2 to TC-7: browser checks against base"
         env:
           ALLOW_LAYOUT_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'layout-change') && '1' || '0' }}
-        run: node bench/ci-assert.mjs "$RESULTS"
+        run: mise run bench:compare "$BASE_REF" "$RUNNER_TEMP/bench"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-results
-          path: ${{ runner.temp }}/results
+          path: ${{ runner.temp }}/bench/results

@@ -27,3 +27,5 @@ yarn-error.log*
 *.sw*
 *.pyc
 /.ci-base
+/reports
+/.bench

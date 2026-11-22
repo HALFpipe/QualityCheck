@@ -1,2 +1,77 @@
 [tools]
 node = "26"
+
+[env]
+QC_REPORTS = "{{config_root}}/reports"
+
+# node-sass 7 does not compile on current Node; sass-loader uses Dart Sass when present
+[tasks.install]
+description = "Install npm dependencies"
+run = [
+  "npm ci --ignore-scripts",
+  "npm install --no-save --ignore-scripts sass@1.108.2",
+]
+sources = ["package.json", "package-lock.json"]
+outputs = ["node_modules/.package-lock.json"]
+
+[tasks.build]
+description = "Build dist/index.html"
+depends = ["install"]
+run = "npm run build"
+sources = ["src/**/*", "package.json", "webpack.config.mjs", "*-plugin.mjs", "babel.config.json", "tsconfig.json"]
+outputs = ["dist/index.html"]
+
+[tasks.test]
+description = "Run unit tests"
+depends = ["install"]
+run = "npm test"
+
+[tasks.report]
+description = "Generate a synthetic report with the current build"
+depends = ["build"]
+usage = 'arg "[subjects]" help="Number of subjects (10 images each)" default="200"'
+run = '''
+dir="$QC_REPORTS/synthetic-$usage_subjects"
+node bench/make-report.mjs "$dir" "$usage_subjects"
+cp dist/index.html "$dir/"
+echo "$dir"
+'''
+
+[tasks.example]
+description = "Download a public example report and add the current build (piop1: 4.0 GB, piop2: 2.2 GB)"
+depends = ["build"]
+usage = 'arg "<name>" help="Example dataset" { choices "piop1" "piop2" }'
+run = '''
+set -euo pipefail
+dir="$QC_REPORTS/ds-$usage_name"
+if [ ! -d "$dir" ]; then
+  mkdir -p "$QC_REPORTS"
+  zip="$QC_REPORTS/ds-$usage_name.zip"
+  curl -fL -C - -o "$zip" "https://download.fmri.science/reports/ds-$usage_name.zip"
+  unzip -q "$zip" -d "$dir.partial"
+  mv "$dir.partial" "$dir"
+  rm "$zip"
+fi
+imgs="$(find "$dir" -name reportimgs.js -print -quit)"
+[ -n "$imgs" ] || { echo "no reportimgs.js found under $dir" >&2; exit 1; }
+cp dist/index.html "$(dirname "$imgs")/"
+dirname "$imgs"
+'''
+
+[tasks.open]
+description = "Open a report in Chrome with a fresh profile, so no ratings carry over"
+usage = 'arg "<dir>" help="Report directory containing index.html"'
+run = '''
+profile="$(mktemp -d)"
+"${CHROME_BIN:-google-chrome}" --user-data-dir="$profile" --no-first-run "file://$(realpath "$usage_dir")/index.html"
+rm -rf "$profile"
+'''
+
+[tasks."bench:compare"]
+description = "Run the CI browser checks against a base ref"
+depends = ["build"]
+usage = '''
+arg "[base]" help="Ref to compare against" default="main"
+arg "[out]" help="Directory for builds and results" default=".bench"
+'''
+run = 'bench/compare.sh "$usage_base" "$usage_out"'

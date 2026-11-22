@@ -11,6 +11,9 @@ jobs:
 
     timeout-minutes: 30
 
+    env:
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+
     permissions:
       contents: write
 
@@ -20,12 +23,7 @@ jobs:
       # installs the Node version pinned in .mise.toml
       - uses: jdx/mise-action@v2
 
-      # node-sass 7 does not compile on current Node; sass-loader uses Dart Sass when present
-      - run: |
-          npm ci --ignore-scripts
-          npm install --no-save --ignore-scripts sass@1.108.2
-
-      - run: npm run build
+      - run: mise run build
 
       - name: Create draft release
         env:
