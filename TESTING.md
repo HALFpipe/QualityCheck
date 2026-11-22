@@ -240,17 +240,18 @@ index order, with no duplicates and a matching count label. It exits 1 if anythi
 node bench/ci-assert.mjs <resultsDir>
 ```
 
-The script reads `profile.mjs` results named `base-<n>.json` and `head-<n>.json` for sizes 200,
-500, 2000 and 4000. It checks that:
+The script reads `profile.mjs` results named `<build>-<subjects>.json`: base at 200 and 500
+subjects, and head at 200, 500, 2000 and 4000. It groups its checks by area:
 
-- box-plot fingerprints match the base build at 200 and 500 subjects
-- load and tab-switch times stay within budget at 2,000 and 4,000 subjects
-- at 500 subjects, head is no slower than 1.5× base plus 1 s
-- the charts view doesn't lay out again when re-shown or when only the height changes, and does
-  lay out when the width changes
-- head has no page errors that base doesn't also have
+| Area | Checks |
+|---|---|
+| Rendering | Box-plot fingerprints match the base build at 200 and 500 subjects. |
+| Performance | Load and tab-switch times stay within budget at 2,000 and 4,000 subjects. At 500 subjects, head is no slower than 1.5× base plus 1 s. |
+| Re-layout | The charts view doesn't lay out again when it's re-shown or when only the window height changes, and does lay out when the width changes. |
+| Page errors | Head has no page errors that base doesn't also have. |
 
-It prints a table of results, and writes it to the job summary when it runs in GitHub Actions.
+It prints a table of results with these area names, and writes the table to the job summary when
+it runs in GitHub Actions.
 
 ## 6. CI
 
@@ -281,13 +282,13 @@ runners. You can override them with environment variables:
 | `BUDGET_REGRESSION_FACTOR` | 1.5 |
 | `BUDGET_REGRESSION_SLACK_MS` | 1000 |
 
-If a budget check fails, look at the uploaded results before raising the limit. The comparison
+If a Performance check fails, look at the uploaded results before raising the limit. The comparison
 against base catches most slowdowns. The absolute budgets catch costs that grow badly with report
 size.
 
 ### Intended rendering changes
 
-If a pull request is meant to move points on the box plots, the fingerprint check will fail. Add
+If a pull request is meant to move points on the box plots, the Rendering check will fail. Add
 the `layout-change` label to the pull request to allow it. Say in the description what changed and
 why.
 
