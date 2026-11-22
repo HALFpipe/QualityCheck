@@ -58,9 +58,19 @@ dirname "$imgs"
 description = "Open a report in Chrome with a fresh profile, so no ratings carry over"
 usage = 'arg "<dir>" help="Report directory containing index.html"'
 run = '''
+[ -f "$usage_dir/index.html" ] || { echo "no index.html in $usage_dir" >&2; exit 1; }
 profile="$(mktemp -d)"
-"${CHROME_BIN:-google-chrome}" --user-data-dir="$profile" --no-first-run "file://$(realpath "$usage_dir")/index.html"
-rm -rf "$profile"
+# Chrome logs internal diagnostics to stderr; show them only if it fails
+log="$(mktemp)"
+status=0
+"${CHROME_BIN:-google-chrome}" --user-data-dir="$profile" --no-first-run \
+  "file://$(realpath "$usage_dir")/index.html" 2>"$log" || status=$?
+if [ "$status" -ne 0 ]; then
+  echo "Chrome exited with status $status. Last lines of its output:" >&2
+  tail -n 20 "$log" >&2
+fi
+rm -rf "$profile" "$log"
+exit "$status"
 '''
 
 [tasks."bench:compare"]
