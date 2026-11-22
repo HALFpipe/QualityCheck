@@ -19,7 +19,7 @@ const BUDGET = {
 const allowLayoutChange = process.env.ALLOW_LAYOUT_CHANGE === "1";
 
 const rows = [];
-const check = (tc, name, ok, detail) => rows.push({ tc, name, ok, detail });
+const check = (area, name, ok, detail) => rows.push({ area, name, ok, detail });
 const ms = (x) => `${Math.round(x)} ms`;
 const maxTab = (r) => Math.max(...r.boxPlotTabs.map((t) => t.ms));
 const chartsTime = (r) => r.load.paintedMs + r.boxPlotTabs.reduce((a, t) => a + t.ms, 0);
@@ -28,44 +28,44 @@ const [base200, head200, base500, head500, head2000, head4000] = await Promise.a
   ["base-200", "head-200", "base-500", "head-500", "head-2000", "head-4000"].map(load)
 );
 
-// TC-2: box-plot point positions match the base build
+// box-plot point positions match the base build
 for (const [base, head] of [[base200, head200], [base500, head500]]) {
   const same = base.boxPlotTabs.every((t, i) => t.layout === head.boxPlotTabs[i].layout);
   const detail = head.boxPlotTabs.map((t, i) => `${t.valType} ${base.boxPlotTabs[i].layout}→${t.layout}`).join(", ");
-  check("TC-2", `fingerprints match base (${head.nImgs} imgs)`, same || allowLayoutChange,
+  check("Rendering", `fingerprints match base (${head.nImgs} imgs)`, same || allowLayoutChange,
     same ? "identical" : allowLayoutChange ? `changed, allowed: ${detail}` : detail);
 }
 
-// TC-3: absolute budgets on large reports, and no regression against base
-check("TC-3", "20k imgs: load to painted", head2000.load.paintedMs <= BUDGET.paint2000,
+// absolute budgets on large reports, and no regression against base
+check("Performance", "20k imgs: load to painted", head2000.load.paintedMs <= BUDGET.paint2000,
   `${ms(head2000.load.paintedMs)} (budget ${ms(BUDGET.paint2000)})`);
-check("TC-3", "20k imgs: slowest box-plot tab", maxTab(head2000) <= BUDGET.tab2000,
+check("Performance", "20k imgs: slowest box-plot tab", maxTab(head2000) <= BUDGET.tab2000,
   `${ms(maxTab(head2000))} (budget ${ms(BUDGET.tab2000)})`);
-check("TC-3", "40k imgs: load to painted", head4000.load.paintedMs <= BUDGET.paint4000,
+check("Performance", "40k imgs: load to painted", head4000.load.paintedMs <= BUDGET.paint4000,
   `${ms(head4000.load.paintedMs)} (budget ${ms(BUDGET.paint4000)})`);
 const limit = BUDGET.regressionFactor * chartsTime(base500) + BUDGET.regressionSlack;
-check("TC-3", "5k imgs: charts time vs base", chartsTime(head500) <= limit,
+check("Performance", "5k imgs: charts time vs base", chartsTime(head500) <= limit,
   `head ${ms(chartsTime(head500))}, base ${ms(chartsTime(base500))} (limit ${ms(limit)})`);
 
-// TC-4: no layout when the charts view is re-shown or only the height changes
+// no layout when the charts view is re-shown or only the height changes
 const lc = head2000.layoutCalls;
-check("TC-4", "no layout on hide/show of charts", lc.hideAndShowCharts === 0, `${lc.hideAndShowCharts} calls`);
-check("TC-4", "no layout on height-only resize", lc.heightOnlyResize === 0, `${lc.heightOnlyResize} calls`);
-check("TC-4", "layout on width change", lc.widthResize >= 1, `${lc.widthResize} calls`);
+check("Re-layout", "no layout on hide/show of charts", lc.hideAndShowCharts === 0, `${lc.hideAndShowCharts} calls`);
+check("Re-layout", "no layout on height-only resize", lc.heightOnlyResize === 0, `${lc.heightOnlyResize} calls`);
+check("Re-layout", "layout on width change", lc.widthResize >= 1, `${lc.widthResize} calls`);
 
-// TC-5 plus general health: the large report rendered, and no page errors beyond those base has
+// no page errors beyond those base has
 const known = new Set(base200.pageErrors);
 for (const r of [head200, head500, head2000, head4000]) {
   const fresh = r.pageErrors.filter((e) => !known.has(e));
-  check(r.nImgs >= 40000 ? "TC-5" : "—", `${r.nImgs} imgs: no new page errors`, fresh.length === 0,
+  check("Page errors", `${r.nImgs} imgs: no new page errors`, fresh.length === 0,
     fresh.length ? fresh.join("; ") : `${r.pageErrors.length} known`);
 }
 
 const failed = rows.filter((r) => !r.ok);
 const table = [
-  "| TC | Check | Result | Detail |",
+  "| Area | Check | Result | Detail |",
   "|---|---|---|---|",
-  ...rows.map((r) => `| ${r.tc} | ${r.name} | ${r.ok ? "✅" : "❌"} | ${r.detail.replaceAll("|", "\\|")} |`),
+  ...rows.map((r) => `| ${r.area} | ${r.name} | ${r.ok ? "✅" : "❌"} | ${r.detail.replaceAll("|", "\\|")} |`),
 ].join("\n");
 console.log(table);
 if (process.env.GITHUB_STEP_SUMMARY) {

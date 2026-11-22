@@ -37,15 +37,15 @@ jobs:
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
 
-      - name: "TC-0: unit tests"
+      - name: Unit tests
         run: mise run test
 
-      - name: "TC-1: no collections dependency"
+      - name: No collections dependency
         run: |
           if grep -rnE "from ['\"]collections|require\(['\"]collections" src; then exit 1; fi
           node -e 'const p = require("./package.json"); if ("collections" in {...p.dependencies, ...p.devDependencies}) process.exit(1)'
 
-      - name: "TC-2 to TC-7: browser checks against base"
+      - name: Browser checks against base
         env:
           ALLOW_LAYOUT_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'layout-change') && '1' || '0' }}
         run: mise run bench:compare "$BASE_REF" "$RUNNER_TEMP/bench"
